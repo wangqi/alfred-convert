@@ -22,7 +22,6 @@ up your Python script to best utilise the :class:`Workflow` object.
 from __future__ import print_function, unicode_literals
 
 import binascii
-import cPickle
 from copy import deepcopy
 import json
 import logging
@@ -44,8 +43,8 @@ except ImportError:  # pragma: no cover
     import xml.etree.ElementTree as ET
 
 # imported to maintain API
-from util import AcquisitionError  # noqa: F401
-from util import (
+from workflow.util import AcquisitionError
+from workflow.util import (
     atomic_writer,
     LockFile,
     uninterruptible,
@@ -1100,7 +1099,7 @@ class Workflow(object):
             if self.alfred_env.get('workflow_bundleid'):
                 self._bundleid = self.alfred_env.get('workflow_bundleid')
             else:
-                self._bundleid = unicode(self.info['bundleid'], 'utf-8')
+                self._bundleid = str(self.info['bundleid'])
 
         return self._bundleid
 
@@ -1171,7 +1170,7 @@ class Workflow(object):
                 version = self.info.get('version')
 
             if version:
-                from update import Version
+                from workflow.update import Version
                 version = Version(version)
 
             self._version = version
@@ -1299,7 +1298,8 @@ class Workflow(object):
             # the library is in. CWD will be the workflow root if
             # a workflow is being run in Alfred
             candidates = [
-                os.path.abspath(os.getcwdu()),
+                # os.path.abspath(os.getcwdu()),
+                os.path.abspath(os.getcwd()),
                 os.path.dirname(os.path.abspath(os.path.dirname(__file__)))]
 
             # climb the directory tree until we find `info.plist`
@@ -2093,7 +2093,7 @@ class Workflow(object):
                     else:  # pragma: no cover
                         name = os.path.dirname(__file__)
                     self.add_item("Error in workflow '%s'" % name,
-                                  unicode(err),
+                                  str(err),
                                   icon=ICON_ERROR)
                     self.send_feedback()
             return 1
@@ -2324,13 +2324,13 @@ class Workflow(object):
             # version = self._update_settings['version']
             version = str(self.version)
 
-            from background import run_in_background
+            from workflow.background import run_in_background
 
             # update.py is adjacent to this file
             update_script = os.path.join(os.path.dirname(__file__),
-                                         b'update.py')
+                                         'update.py')
 
-            cmd = ['/usr/bin/python', update_script, 'check', repo, version]
+            cmd = ['/usr/bin/python3', update_script, 'check', repo, version]
 
             if self.prereleases:
                 cmd.append('--prereleases')
@@ -2369,7 +2369,7 @@ class Workflow(object):
         update_script = os.path.join(os.path.dirname(__file__),
                                      b'update.py')
 
-        cmd = ['/usr/bin/python', update_script, 'install', repo, version]
+        cmd = ['/usr/bin/python3', update_script, 'install', repo, version]
 
         if self.prereleases:
             cmd.append('--prereleases')
@@ -2697,8 +2697,8 @@ class Workflow(object):
         """
         encoding = encoding or self._input_encoding
         normalization = normalization or self._normalizsation
-        if not isinstance(text, unicode):
-            text = unicode(text, encoding)
+        if not isinstance(text, str):
+            text = str(text, encoding)
         return unicodedata.normalize(normalization, text)
 
     def fold_to_ascii(self, text):
@@ -2765,8 +2765,10 @@ class Workflow(object):
     def _load_info_plist(self):
         """Load workflow info from ``info.plist``."""
         # info.plist should be in the directory above this one
-        self._info = plistlib.readPlist(self.workflowfile('info.plist'))
-        self._info_loaded = True
+        # self._info = plistlib.readPlist(self.workflowfile('info.plist'))
+        with open(self.workflowfile('info.plist'), 'rb') as f:
+            self._info = plistlib.load(f)
+            self._info_loaded = True
 
     def _create(self, dirpath):
         """Create directory `dirpath` if it doesn't exist.

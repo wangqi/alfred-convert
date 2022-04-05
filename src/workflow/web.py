@@ -21,8 +21,9 @@ import socket
 import string
 import unicodedata
 import urllib
-import urllib2
-import urlparse
+import urllib.request
+# import urllib2
+# import urlparse
 import zlib
 
 __version__ = open(os.path.join(os.path.dirname(__file__), 'version')).read()
@@ -100,7 +101,8 @@ def str_dict(dic):
     return dic2
 
 
-class NoRedirectHandler(urllib2.HTTPRedirectHandler):
+# class NoRedirectHandler(urllib2.HTTPRedirectHandler):
+class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
     """Prevent redirections."""
 
     def redirect_request(self, *args):
@@ -182,13 +184,13 @@ class CaseInsensitiveDictionary(dict):
             yield v['val']
 
 
-class Request(urllib2.Request):
+class Request(urllib.request.Request):
     """Subclass of :class:`urllib2.Request` that supports custom methods."""
 
     def __init__(self, *args, **kwargs):
         """Create a new :class:`Request`."""
         self._method = kwargs.pop('method', None)
-        urllib2.Request.__init__(self, *args, **kwargs)
+        urllib.request.Request.__init__(self, *args, **kwargs)
 
     def get_method(self):
         return self._method.upper()

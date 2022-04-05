@@ -10,8 +10,6 @@
 
 """Drives Script Filter to show unit conversions in Alfred 3."""
 
-from __future__ import print_function
-
 import os
 import sys
 
